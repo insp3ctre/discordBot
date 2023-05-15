@@ -161,3 +161,4 @@ cython_debug/
 
 ffmpeg.exe
 connection.py
+audio/
