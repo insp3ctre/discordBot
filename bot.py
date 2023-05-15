@@ -28,7 +28,7 @@ from mutagen.mp3 import MP3
 import time
 import random as rand
 
-from pytube import YouTube
+from pytube import YouTube, Search
 
 # not sure if I need this
 intents = discord.Intents.all()
@@ -82,9 +82,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
 ##########
 
 
-@bot.command(name='play', help='Play a video via a url or "keywords"')
+@bot.command(name='play2', help='Play a video via a url or "keywords"')
 @commands.has_role('Big Pens')
-async def play(ctx,url):
+async def play2(ctx,url):
 	voice_client = ctx.message.guild.voice_client
 	if not voice_client.is_playing():
 		try :
@@ -111,9 +111,9 @@ async def play(ctx,url):
 
 
 ##### testing
-@bot.command(name='play2', help='Play a video via a url or "keywords"')
+@bot.command(name='play', help='Play a video via a url or "keywords"')
 @commands.has_role('Big Pens')
-async def play2(ctx,url):
+async def play(ctx, *url):
 	voice_client = ctx.message.guild.voice_client
 	if not voice_client.is_playing():
 		try :
@@ -128,7 +128,7 @@ async def play2(ctx,url):
 				new_file = base + '.mp3'
 				os.rename(out_file, new_file)
 				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=new_file))
-				await ctx.send('**Now playing:** {}'.format(new_file))
+				await ctx.send('**Now playing:** {}'.format(yt.title))
 		except:
 			await ctx.send("The bot is not connected to a voice channel.")
 	else:
@@ -203,7 +203,7 @@ async def resume(ctx):
         await ctx.send("The bot was not playing anything before this. Use play_song command")
 
 @bot.command(name='tts', help='Uses texts to speech in a text channel')
-@commands.has_role('Bot Daddy')
+@commands.has_role('Bot Dad')
 async def tts(ctx, *tss):
 	if tss is not None:
 		tss = convertTuple(tss)
@@ -231,7 +231,7 @@ def mutagen_length(path):
 
 # custom tts
 @bot.command(name='vtts', help='Uses text to speech in a voice channel')
-@commands.has_role('Bot Daddy')
+@commands.has_role('Bot Dad')
 async def vtts(ctx, *tss):
 	server = ctx.message.guild
 	voice_channel = server.voice_client
@@ -252,13 +252,14 @@ async def vtts(ctx, *tss):
 ######
 # test
 @bot.command(name='test')
-@commands.has_role('Bot Daddy')
+@commands.has_role('Bot Dad')
 async def say(ctx):
 	await ctx.send("howdy")
 
 @bot.command(name='echo', help='Echo a message')
-async def echo(ctx, eeko=None):
+async def echo(ctx, *eeko):
 	if eeko is not None:
+		eeko = convertTuple(eeko)
 		await ctx.send(eeko)
 	else:
 		await ctx.send('Echo!')
@@ -266,18 +267,21 @@ async def echo(ctx, eeko=None):
 
 
 @bot.command(name='quit', help='Kill the bot')
-@commands.has_role('Bot Daddy')
+@commands.has_role('Bot Dad')
 async def quit(ctx):
-	voice_client = ctx.message.guild.voice_client
-	if voice_client.is_connected():
-		await voice_client.disconnect()
-	await ctx.send('Goodnight, Sweet Prince 😘')
-	exit()
+	try:
+		await ctx.message.guild.voice_cliennt.disconnect()
+		await ctx.send('Goodnight, Sweet Prince')
+		exit()
+	except:
+		await ctx.send('Goodnight, Sweet Prince')
+		exit()
+	
 
 # for checking when it connects
 @bot.event
 async def on_ready():
-	print('Harley is a Kinky Jew!')		
+	print('Harley is ready!')		
 
 if __name__ == "__main__" :
 	bot.run(TOKEN)
