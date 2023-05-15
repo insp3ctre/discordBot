@@ -2,12 +2,16 @@
 	# stop command
 	# volumne control
 	# queue for songs
-		# put filename into a stack
-		# pop and append
+		# connect to AWS database!
+			# command to add songs to queue
+				# song name, url, and who queued into database
+			# play command checks database for fiso song
+			# display queue on website (php?) like kevin bacon
 	# type in 1 channel, output in another
-	# different voices (drunk voice?)
-	# add search by keywords
-		# in another command? or with a paramater
+	# change bot to 'function(variable, string*)' to get entire rest of inputs
+
+	# add youtube_dl, gtts, pytube to PATH
+	
 
 import os
 import discord
