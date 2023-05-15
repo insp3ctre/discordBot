@@ -1,5 +1,3 @@
 DISCORD_TOKEN = "MTA1NDU2NTc3OTg1MDM5NTc3OA.GihSFN.e9mYlVLyfZm3cVZ9U5r1Z7qXWR_MZV947FDISw"
 account_sid = 'ACcb04ce1c11651c2b73e1399fa6145c19'
 auth_token = 'd138f5d5dae9e3e9fb0042afc29be361'
-from_number = '+16123602557'
-to_number = '+14158406694'
