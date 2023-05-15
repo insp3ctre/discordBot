@@ -83,53 +83,18 @@ class YTDLSource(discord.PCMVolumeTransformer):
 ##########
 
 
-@bot.command(name='play2', help='Play a video via a url or "keywords"')
-@commands.has_role('Big Pens')
-async def play2(ctx,url):
-	voice_client = ctx.message.guild.voice_client
-	if not voice_client.is_playing():
-		try :
-			server = ctx.message.guild
-			voice_channel = server.voice_client
-			async with ctx.typing():
-				filename = await YTDLSource.from_url(url, loop=bot.loop)
-				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
-				await ctx.send('**Now playing:** {}'.format(filename))
-		except:
-			await ctx.send("The bot is not connected to a voice channel.")
-	else:
-		await voice_client.disconnect()
-		await ctx.message.author.voice.channel.connect()
-		try :
-			server = ctx.message.guild
-			voice_channel = server.voice_client
-			async with ctx.typing():
-				filename = await YTDLSource.from_url(url, loop=bot.loop)
-				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
-				await ctx.send('**Now playing:** {}'.format(filename))
-		except:
-			await ctx.send("The bot is not connected to a voice channel.")
-
-
-##### testing
 @bot.command(name='play', help='Play a video via a url or "keywords"')
 @commands.has_role('Big Pens')
-async def play(ctx, *url):
+async def play(ctx,url):
 	voice_client = ctx.message.guild.voice_client
 	if not voice_client.is_playing():
 		try :
 			server = ctx.message.guild
 			voice_channel = server.voice_client
 			async with ctx.typing():
-				yt = YouTube(url)
-				video = yt.streams.filter(only_audio=True).first()
-				destination = 'audio/'
-				out_file = video.download(output_path=destination)
-				base, ext = os.path.splitext(out_file)
-				new_file = base + '.mp3'
-				os.rename(out_file, new_file)
-				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=new_file))
-				await ctx.send('**Now playing:** {}'.format(yt.title))
+				filename = await YTDLSource.from_url(url, loop=bot.loop)
+				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
+				await ctx.send('**Now playing:** {}'.format(filename))
 		except:
 			await ctx.send("The bot is not connected to a voice channel.")
 	else:
@@ -139,18 +104,11 @@ async def play(ctx, *url):
 			server = ctx.message.guild
 			voice_channel = server.voice_client
 			async with ctx.typing():
-				yt = YouTube(url)
-				video = yt.streams.filter(only_audio=True).first()
-				destination = '.'
-				out_file = video.download(output_path=destination)
-				base, ext = os.path.splitext(out_file)
-				new_file = base + '.mp3'
-				os.rename(out_file, new_file)
-				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=new_file))
-				await ctx.send('**Now playing:** {}'.format(new_file))
+				filename = await YTDLSource.from_url(url, loop=bot.loop)
+				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
+				await ctx.send('**Now playing:** {}'.format(filename))
 		except:
 			await ctx.send("The bot is not connected to a voice channel.")
-#################
 
 @bot.command(name='join', help='Connect to voice chat the user is in')
 @commands.has_role('Big Pens')
@@ -283,6 +241,48 @@ async def quit(ctx):
 @bot.event
 async def on_ready():
 	print('Harley is ready!')		
+
+##### testing
+# @bot.command(name='play2', help='Play a video via a url or "keywords"')
+# @commands.has_role('Big Pens')
+# async def play2(ctx, *url):
+# 	voice_client = ctx.message.guild.voice_client
+# 	if not voice_client.is_playing():
+# 		try :
+# 			server = ctx.message.guild
+# 			voice_channel = server.voice_client
+# 			async with ctx.typing():
+# 				yt = YouTube(url)
+# 				video = yt.streams.filter(only_audio=True).first()
+# 				destination = 'audio/'
+# 				out_file = video.download(output_path=destination)
+# 				base, ext = os.path.splitext(out_file)
+# 				new_file = base + '.mp3'
+# 				os.rename(out_file, new_file)
+# 				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=new_file))
+# 				await ctx.send('**Now playing:** {}'.format(yt.title))
+# 		except:
+# 			await ctx.send("The bot is not connected to a voice channel.")
+# 	else:
+# 		await voice_client.disconnect()
+# 		await ctx.message.author.voice.channel.connect()
+# 		try :
+# 			server = ctx.message.guild
+# 			voice_channel = server.voice_client
+# 			async with ctx.typing():
+# 				yt = YouTube(url)
+# 				video = yt.streams.filter(only_audio=True).first()
+# 				destination = '.'
+# 				out_file = video.download(output_path=destination)
+# 				base, ext = os.path.splitext(out_file)
+# 				new_file = base + '.mp3'
+# 				os.rename(out_file, new_file)
+# 				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=new_file))
+# 				await ctx.send('**Now playing:** {}'.format(new_file))
+# 		except:
+# 			await ctx.send("The bot is not connected to a voice channel.")
+#################
+
 
 if __name__ == "__main__" :
 	bot.run(TOKEN)
