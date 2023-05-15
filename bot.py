@@ -17,9 +17,9 @@ import discord
 from discord.ext import commands, tasks
 import asyncio
 
-import youtube_dl
+import yt_dlp as youtube_dl
 
-from connection import DISCORD_TOKEN, account_sid, auth_token, from_number, to_number
+from connection import DISCORD_TOKEN, account_sid, auth_token
 
 # custom tts
 from gtts import gTTS
@@ -53,7 +53,8 @@ ytdl_format_options = {
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
-    'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
+    'source_address': '0.0.0.0', # bind to ipv4 since ipv6 addresses cause issues sometimes
+    'outtmpl': 'audio/%(title)s.%(ext)s'
 }
 
 ffmpeg_options = {
@@ -122,7 +123,7 @@ async def play(ctx, *url):
 			async with ctx.typing():
 				yt = YouTube(url)
 				video = yt.streams.filter(only_audio=True).first()
-				destination = '.'
+				destination = 'audio/'
 				out_file = video.download(output_path=destination)
 				base, ext = os.path.splitext(out_file)
 				new_file = base + '.mp3'
