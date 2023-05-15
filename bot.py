@@ -1,5 +1,4 @@
 # TODO:
-	# stop command
 	# volumne control
 	# queue for songs
 		# connect to AWS database!
@@ -16,6 +15,7 @@
 import os
 import discord
 from discord.ext import commands, tasks
+import asyncio
 
 import youtube_dl
 
@@ -80,10 +80,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         return filename
 
 ##########
-global queue
-queue = []
 
-##########
 
 @bot.command(name='play', help='Play a video via a url or "keywords"')
 @commands.has_role('Big Pens')
@@ -186,45 +183,6 @@ async def stop(ctx):
 		await ctx.message.author.voice.channel.connect()
 
 
-# def start_playing(voice_channel, player):
-# 	queue[0] = player
-# 	print(len(queue))
-# 	i = 0
-# 	while i <= len(queue):
-# 		try:
-# 			print('about to play')
-# 			voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=queue[i]))
-# 			print('done')
-# 			# voice_client.play(queue[i], after=lambda e: print('Player error: %s' % e) if e else None)
-# 		except:
-# 			pass
-# 		i += 1
-
-# play song
-# @bot.command(name='play', help='Play a video via url or "keywords"')
-# async def play(ctx,url):
-#     try :
-#         server = ctx.message.guild
-#         voice_channel = server.voice_client
-#         async with ctx.typing():
-#             filename = await YTDLSource.from_url(url, loop=bot.loop)
-#             print('found song')
-#             if len(queue) == 0:
-#                 print('attempting to play song')
-#                 start_playing(voice_channel, filename)
-#                 print('playing')
-#                 await ctx.send('**Now playing:** {}'.format(filename))
-#             else:
-#                 queue[len(queue)] = filename
-#                 print('added to queue')
-#                 await ctx.send('**Adding:"" {}'.format(filename) + ' to the queue')
-#     except:
-#         await ctx.send("The bot is not connected to a voice channel.")
-
-
-
-
-
 
 @bot.command(name='pause', help='Pause the current song')
 @commands.has_role('Big Pens')
@@ -246,13 +204,21 @@ async def resume(ctx):
 
 @bot.command(name='tts', help='Uses texts to speech in a text channel')
 @commands.has_role('Bot Daddy')
-async def tts(ctx, tss=None):
+async def tts(ctx, *tss):
 	if tss is not None:
+		tss = convertTuple(tss)
 		await ctx.send(tss, tts=True)
 	else:
 		await ctx.send('https://media1.giphy.com/media/8TweEdaxxfuElKkRxz/200w.gif?cid=6c09b952y6xf7pm52yi2j8h1z7fjsbi13l2zsaz2jtyq6uka&rid=200w.gif&ct=g')
 ######################
 
+
+def convertTuple(tup):
+        # initialize an empty string
+    str = ''
+    for item in tup:
+        str = str + ' ' + item
+    return str
 
 def mutagen_length(path):
 	try:
@@ -266,10 +232,11 @@ def mutagen_length(path):
 # custom tts
 @bot.command(name='vtts', help='Uses text to speech in a voice channel')
 @commands.has_role('Bot Daddy')
-async def vtts(ctx, tss=None):
+async def vtts(ctx, *tss):
 	server = ctx.message.guild
 	voice_channel = server.voice_client
 	if tss is not None:
+		tss = convertTuple(tss)
 		audio = gTTS(text=tss, lang='en')
 		file = f'{rand.randint(1, 70)}.mp3'
 		audio.save(file)
