@@ -1,5 +1,10 @@
 # TODO:
-	# volumne control
+	# commands to add:
+		# volume up
+		# volume down
+		# stop (clear queue)
+		# pause (pause current audio) (add argument to play to check if pause is true)
+		# skip (skip current song and progress in queue)
 	# queue for songs
 		# connect to AWS database!
 			# command to add songs to queue
@@ -7,9 +12,7 @@
 			# play command checks database for fiso song
 			# display queue on website (php?) like kevin bacon
 	# type in 1 channel, output in another
-	# change bot to 'function(variable, string*)' to get entire rest of inputs
 
-	# add youtube_dl, gtts, pytube to PATH
 	
 
 import os
@@ -28,7 +31,7 @@ from mutagen.mp3 import MP3
 import time
 import random as rand
 
-from pytube import YouTube, Search
+from youtube_search import YoutubeSearch
 
 # not sure if I need this
 intents = discord.Intents.all()
@@ -83,32 +86,39 @@ class YTDLSource(discord.PCMVolumeTransformer):
 ##########
 
 
+def ytKeywordSearch(keywords):
+	keywords = convertTuple(keywords)
+	results = YoutubeSearch(keywords, max_results=1).to_dict()
+	# print(results)
+	# urlSuffix = results[0]['url_suffix'].split("&")
+	url = "https://www.youtube.com" + results[0]['url_suffix'].split("&")[0]
+	return url
+
 @bot.command(name='play', help='Play a video via a url or "keywords"')
 @commands.has_role('Big Pens')
-async def play(ctx,url):
-	voice_client = ctx.message.guild.voice_client
-	if not voice_client.is_playing():
-		try :
-			server = ctx.message.guild
-			voice_channel = server.voice_client
+async def play(ctx, *url):
+	voice_channel = ctx.message.guild.voice_client
+	try:
+		if not voice_channel.is_playing():
+			print("not playing any audio")
 			async with ctx.typing():
-				filename = await YTDLSource.from_url(url, loop=bot.loop)
+				try:
+					print("finding video by keywords")
+					link = ytKeywordSearch(url)
+				except:
+					print('finding video by url')
+					link = url[0]
+				filename = await YTDLSource.from_url(link, loop=bot.loop)
 				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
 				await ctx.send('**Now playing:** {}'.format(filename))
-		except:
-			await ctx.send("The bot is not connected to a voice channel.")
-	else:
-		await voice_client.disconnect()
-		await ctx.message.author.voice.channel.connect()
-		try :
-			server = ctx.message.guild
-			voice_channel = server.voice_client
-			async with ctx.typing():
-				filename = await YTDLSource.from_url(url, loop=bot.loop)
-				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
-				await ctx.send('**Now playing:** {}'.format(filename))
-		except:
-			await ctx.send("The bot is not connected to a voice channel.")
+		else:
+			await ctx.send("Already playing audio!")
+	except:
+		await ctx.send("The bot is not connected to a voice channel.")
+	# try:
+		
+	# except:
+	# 	await ctx.send("The bot is not connected to a voice channel.")
 
 @bot.command(name='join', help='Connect to voice chat the user is in')
 @commands.has_role('Big Pens')
