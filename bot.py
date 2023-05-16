@@ -22,21 +22,14 @@
 	
 
 import os
-import discord
-from discord.ext import commands, tasks
-import asyncio
-
-import yt_dlp as youtube_dl
-
-# from connection import DISCORD_TOKEN
-
-# custom tts
-from gtts import gTTS
-# from pygame import mixer
-from mutagen.mp3 import MP3
 import time
+import discord
+import asyncio
 import random as rand
-
+import yt_dlp as youtube_dl
+from gtts import gTTS
+from mutagen.mp3 import MP3
+from discord.ext import commands
 from youtube_search import YoutubeSearch
 
 # not sure if I need this
