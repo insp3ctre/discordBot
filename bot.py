@@ -23,12 +23,14 @@ import glob
 import time
 import discord
 import asyncio
+import mysql.connector
 import random as rand
 import yt_dlp as youtube_dl
 from gtts import gTTS
 from mutagen.mp3 import MP3
 from discord.ext import commands
 from youtube_search import YoutubeSearch
+from mysql.connector import errorcode
 
 # not sure if I need this
 intents = discord.Intents.all()
@@ -37,6 +39,24 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 
 client = discord.Client(intents = intents)
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+# sql stuff
+hostname = "127.0.0.1"
+username = "root"
+password = "securepswd"
+database_name = "harley"
+
+try:
+	con = mysql.connector.connect(host=hostname, user=username, password=password, database=database_name)
+	print(con)
+except mysql.connector.Error as err:
+  if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+    print("Something is wrong with your user name or password")
+  elif err.errno == errorcode.ER_BAD_DB_ERROR:
+    print("Database does not exist")
+  else:
+    print(err)
+
 
 ########### youtube stuff ####
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -87,9 +107,38 @@ def ytKeywordSearch(keywords):
 	url = "https://www.youtube.com" + results[0]['url_suffix'].split("&")[0]
 	return url
 
-@bot.command(name='play', help='Play a video via a url or "keywords"')
+@bot.command(name='add', help='Add a song to the queue via url or keywords')
 @commands.has_role('Big Pens')
-async def play(ctx, *url):
+async def add(ctx, *url):
+	# voice_channel = ctx.message.guild.voice_client
+	try:
+		async with ctx.typing():
+			try:
+				link = ytKeywordSearch(url) # by keyword
+			except:
+				link = url[0] # by url
+			filename = await YTDLSource.from_url(link, loop=bot.loop)
+			print(f"inserting {filename} and {ctx.author}")
+			cursor = con.cursor()
+			print(1)
+			query = ("INSERT INTO harley "
+	    			"(filename, author) "
+					"VALUES (%s, %s)")
+			query_data = (filename, str(ctx.author))
+			print(2)
+			cursor.execute(query, query_data)
+			print(3)
+			con.commit()
+			print(4)
+			cursor.close()
+			print("inserted")
+			await ctx.send(f"{filename} has been added to the queue!")
+	except Exception as e:
+		await ctx.send(f"An error occurred:\n{e}")
+
+@bot.command(name='goodplay', help='(old) Play a video via a url or keywords')
+@commands.has_role('Big Pens')
+async def goodplay(ctx, *url):
 	voice_channel = ctx.message.guild.voice_client
 	try:
 		if not voice_channel.is_playing():
