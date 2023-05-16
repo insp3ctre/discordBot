@@ -5,5 +5,6 @@ USE harley;
 CREATE TABLE queue (
     ID INT UNSIGNED NOT NULL AUTO_INCREMENT,
     filename VARCHAR(300) NOT NULL,
-    author VARCHAR(300) NOT NULL
+    author VARCHAR(300) NOT NULL,
+    PRIMARY KEY (ID)
 );
