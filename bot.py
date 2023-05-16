@@ -2,8 +2,6 @@
 
 # TODO:
 	# commands to add:
-		# volume up
-		# volume down
 		# stop (clear queue)
 		# pause (pause current audio) (add argument to play to check if pause is true)
 		# skip (skip current song and progress in queue)
@@ -22,6 +20,7 @@
 	
 
 import os
+import glob
 import time
 import discord
 import asyncio
@@ -39,8 +38,6 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 
 client = discord.Client(intents = intents)
 bot = commands.Bot(command_prefix='!', intents=intents)
-
-# for custom tts
 
 ########### youtube stuff ####
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -245,10 +242,14 @@ async def quit(ctx):
 	try:
 		await ctx.message.guild.voice_cliennt.disconnect()
 		await ctx.send('Goodnight, Sweet Prince')
-		exit()
 	except:
 		await ctx.send('Goodnight, Sweet Prince')
+	finally:
+		files = glob.glob('audio/*')
+		for f in files:
+			os.remove(f)
 		exit()
+		
 	
 
 # for checking when it connects
