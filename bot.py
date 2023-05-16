@@ -118,20 +118,15 @@ async def add(ctx, *url):
 			except:
 				link = url[0] # by url
 			filename = await YTDLSource.from_url(link, loop=bot.loop)
-			print(f"inserting {filename} and {ctx.author}")
+			# print(f"inserting {filename} and {ctx.author}")
 			cursor = con.cursor()
-			print(1)
 			query = ("INSERT INTO harley "
 	    			"(filename, author) "
 					"VALUES (%s, %s)")
 			query_data = (filename, str(ctx.author))
-			print(2)
 			cursor.execute(query, query_data)
-			print(3)
 			con.commit()
-			print(4)
 			cursor.close()
-			print("inserted")
 			await ctx.send(f"{filename} has been added to the queue!")
 	except Exception as e:
 		await ctx.send(f"An error occurred:\n{e}")
