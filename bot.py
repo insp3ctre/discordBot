@@ -209,7 +209,9 @@ async def stop(ctx):
 		await voice_client.disconnect()
 		await ctx.message.author.voice.channel.connect()
 
-@bot.command(name='volume', help=r"Change the volume to between 0% and 200%")
+
+@bot.command(name='volume', help="Change the volume to between 0 and 200 (percent)")
+@commands.has_role(bot_role)
 async def volume(ctx, change):
 	voice_channel = ctx.message.guild.voice_client
 	voice_channel.source = discord.PCMVolumeTransformer(voice_channel.source)
