@@ -1,6 +1,9 @@
 # actiate venv: .\venv\Scripts\activate
 
 # TODO:
+	# deleting after query doesn't work
+	# clearing table doesn't work on quit
+
 	# commands to add:
 		# stop (clear queue)
 		# pause (pause current audio) (add argument to play to check if pause is true)
@@ -9,16 +12,18 @@
 			# if song is currently paused, do nothing
 		# make queue command queue to database
 	# queue for songs
-		# connect to AWS database!
+		# connect to xampp
 			# command to add songs to queue
-				# song name, url, and who queued into database
+				# filename and who queued into database
 			# play command checks database for fiso song
 			# display queue on website (php?) like kevin bacon
 				# add option to add songs to queue from site
+	# add global variable for queue length and current song ID
+		# have play query for where id = current song id + 1
 
 	
-
 import os
+import cv2
 import glob
 import time
 import discord
@@ -39,6 +44,14 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 
 client = discord.Client(intents = intents)
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+bot_role = 'Big Pens'
+admin_role = 'Bot Dad'
+
+global queue_length
+global current_id
+queue_length = 0
+current_id = 0
 
 # sql stuff
 hostname = "127.0.0.1"
@@ -108,7 +121,7 @@ def ytKeywordSearch(keywords):
 	return url
 
 @bot.command(name='add', help='Add a song to the queue via url or keywords')
-@commands.has_role('Big Pens')
+@commands.has_role(bot_role)
 async def add(ctx, *url):
 	# voice_channel = ctx.message.guild.voice_client
 	try:
@@ -120,7 +133,7 @@ async def add(ctx, *url):
 			filename = await YTDLSource.from_url(link, loop=bot.loop)
 			# print(f"inserting {filename} and {ctx.author}")
 			cursor = con.cursor()
-			query = ("INSERT INTO harley "
+			query = ("INSERT INTO queue "
 	    			"(filename, author) "
 					"VALUES (%s, %s)")
 			query_data = (filename, str(ctx.author))
@@ -131,30 +144,70 @@ async def add(ctx, *url):
 	except Exception as e:
 		await ctx.send(f"An error occurred:\n{e}")
 
-@bot.command(name='goodplay', help='(old) Play a video via a url or keywords')
-@commands.has_role('Big Pens')
-async def goodplay(ctx, *url):
+@bot.command(name='play', help='Start playing from the queue')
+@commands.has_role(bot_role)
+async def play(ctx):
 	voice_channel = ctx.message.guild.voice_client
 	try:
-		if not voice_channel.is_playing():
-			# print("not playing any audio")
-			async with ctx.typing():
-				try:
-					# print("finding video by keywords")
-					link = ytKeywordSearch(url)
-				except:
-					# print('finding video by url')
-					link = url[0]
-				filename = await YTDLSource.from_url(link, loop=bot.loop)
-				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
-				await ctx.send('**Now playing:** {}'.format(filename))
-		else:
-			await ctx.send("Already playing audio!")
-	except:
-		await ctx.send("The bot is not connected to a voice channel.")
+		cursor = con.cursor()
+		query = ("SELECT * FROM queue "
+	    		"ORDER BY id ASC")
+		cursor.execute(query)
+		results = cursor.fetchall()
+		cursor.close()
+		print(results)
+		queue_length = len(results)
+		id = results[0][0]
+		filename = results[0][1]
+		author = results[0][2]
+		print(0)
+		voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
+		print(1)
+		await ctx.send(f'**Now playing:** {filename} (queued by @{author})')
+		print(2)
+		cursor = con.cursor()
+		query = ("DELETE FROM queue "
+				"WHERE id=%(song)s")
+		query_data = {
+			'song': id
+		}
+		print(3)
+		cursor.execute(query, query_data)
+		con.commit()
+		cursor.close()
+		print(4)
+		if queue_length > 1:
+			length = webm_length(filename) * 10
+			print(length)
+			time.sleep(length)
+			next = await play(ctx)
+	except Exception as e:
+		print('no work', e)
+
+# @bot.command(name='goodplay', help='(old) Play a video via a url or keywords')
+# @commands.has_role(bot_role)
+# async def goodplay(ctx, *url):
+# 	voice_channel = ctx.message.guild.voice_client
+# 	try:
+# 		if not voice_channel.is_playing():
+# 			# print("not playing any audio")
+# 			async with ctx.typing():
+# 				try:
+# 					# print("finding video by keywords")
+# 					link = ytKeywordSearch(url)
+# 				except:
+# 					# print('finding video by url')
+# 					link = url[0]
+# 				filename = await YTDLSource.from_url(link, loop=bot.loop)
+# 				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
+# 				await ctx.send('**Now playing:** {}'.format(filename))
+# 		else:
+# 			await ctx.send("Already playing audio!")
+# 	except:
+# 		await ctx.send("The bot is not connected to a voice channel.")
 
 @bot.command(name='join', help='Connect to voice chat the user is in')
-@commands.has_role('Big Pens')
+@commands.has_role(bot_role)
 async def join(ctx):
     if not ctx.message.author.voice:
         await ctx.send("{} is not connected to a voice channel".format(ctx.message.author.name))
@@ -164,7 +217,7 @@ async def join(ctx):
     await channel.connect()
 
 @bot.command(name='leave', help='Disconnect from voice chat')
-@commands.has_role('Big Pens')
+@commands.has_role(bot_role)
 async def leave(ctx):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_connected():
@@ -174,7 +227,7 @@ async def leave(ctx):
 
 
 @bot.command(name='stop', help='Reset the bot in a call')
-@commands.has_role('Big Pens')
+@commands.has_role(bot_role)
 async def stop(ctx):
 	voice_client = ctx.message.guild.voice_client
 	if not ctx.message.author.voice:
@@ -198,7 +251,7 @@ async def volume(ctx, change):
 
 
 @bot.command(name='pause', help='Pause the current song')
-@commands.has_role('Big Pens')
+@commands.has_role(bot_role)
 async def pause(ctx):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_playing():
@@ -207,7 +260,7 @@ async def pause(ctx):
         await ctx.send("The bot is not playing anything at the moment.")
 
 @bot.command(name='resume', help='Resumes the song')
-@commands.has_role('Big Pens')
+@commands.has_role(bot_role)
 async def resume(ctx):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_paused():
@@ -216,7 +269,7 @@ async def resume(ctx):
         await ctx.send("The bot was not playing anything before this. Use play_song command")
 
 @bot.command(name='tts', help='Uses texts to speech in a text channel')
-@commands.has_role('Bot Dad')
+@commands.has_role(admin_role)
 async def tts(ctx, *tss):
 	if tss is not None:
 		tss = convertTuple(tss)
@@ -234,17 +287,20 @@ def convertTuple(tup):
     return str
 
 def mutagen_length(path):
-	try:
-		audio = MP3(path)
-		length = audio.info.length
-		return length
-	except:
-		return None
 
+	audio = MP3(path)
+	length = audio.info.length
+	return length
+
+def webm_length(filename):
+	video = cv2.VideoCapture(filename)
+	frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
+	fps = video.get(cv2.CAP_PROP_FPS)
+	return round(frames / fps) + 5
 
 # custom tts
 @bot.command(name='vtts', help='Uses text to speech in a voice channel')
-@commands.has_role('Bot Dad')
+@commands.has_role(admin_role)
 async def vtts(ctx, *tss):
 	server = ctx.message.guild
 	voice_channel = server.voice_client
@@ -261,11 +317,10 @@ async def vtts(ctx, *tss):
 		await ctx.send('You did not include a message')
 
 
-
 ######
 # test
 @bot.command(name='test')
-@commands.has_role('Bot Dad')
+@commands.has_role(admin_role)
 async def say(ctx):
 	await ctx.send("howdy")
 
@@ -280,7 +335,7 @@ async def echo(ctx, *eeko):
 
 
 @bot.command(name='quit', help='Kill the bot')
-@commands.has_role('Bot Dad')
+@commands.has_role(admin_role)
 async def quit(ctx):
 	try:
 		await ctx.message.guild.voice_cliennt.disconnect()
@@ -288,9 +343,29 @@ async def quit(ctx):
 	except:
 		await ctx.send('Goodnight, Sweet Prince')
 	finally:
+		# clear audio file
 		files = glob.glob('audio/*')
 		for f in files:
 			os.remove(f)
+
+		# clear database
+		cursor = con.cursor()
+		query = '''DROP DATABASE IF EXiSTS harley;
+				CREATE DATABASE harley;
+				USE harley;
+
+				CREATE TABLE queue (
+					ID INT UNSIGNED NOT NULL AUTO_INCREMENT,
+					filename VARCHAR(300) NOT NULL,
+					author VARCHAR(300) NOT NULL,
+					PRIMARY KEY (ID)
+				);'''
+		cursor.execute(query, multi=True)
+		con.commit()
+		cursor.close()
+		con.close()
+		print("database cleared")
+
 		exit()
 		
 	
@@ -302,7 +377,7 @@ async def on_ready():
 
 ##### testing
 # @bot.command(name='play2', help='Play a video via a url or "keywords"')
-# @commands.has_role('Big Pens')
+# @commands.has_role(bot_role)
 # async def play2(ctx, *url):
 # 	voice_client = ctx.message.guild.voice_client
 # 	if not voice_client.is_playing():
