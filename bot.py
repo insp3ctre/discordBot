@@ -26,7 +26,7 @@ import asyncio
 
 import yt_dlp as youtube_dl
 
-from connection import DISCORD_TOKEN, account_sid, auth_token
+from connection import DISCORD_TOKEN
 
 # custom tts
 from gtts import gTTS
