@@ -5,6 +5,9 @@
 		# stop (clear queue)
 		# pause (pause current audio) (add argument to play to check if pause is true)
 		# skip (skip current song and progress in queue)
+		# make play command play from database
+			# if song is currently paused, do nothing
+		# make queue command queue to database
 	# queue for songs
 		# connect to AWS database!
 			# command to add songs to queue
@@ -12,6 +15,7 @@
 			# play command checks database for fiso song
 			# display queue on website (php?) like kevin bacon
 	# type in 1 channel, output in another
+	# delete all from "audio" folder on quit
 
 	
 
@@ -89,8 +93,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
 def ytKeywordSearch(keywords):
 	keywords = convertTuple(keywords)
 	results = YoutubeSearch(keywords, max_results=1).to_dict()
-	# print(results)
-	# urlSuffix = results[0]['url_suffix'].split("&")
 	url = "https://www.youtube.com" + results[0]['url_suffix'].split("&")[0]
 	return url
 
@@ -100,13 +102,13 @@ async def play(ctx, *url):
 	voice_channel = ctx.message.guild.voice_client
 	try:
 		if not voice_channel.is_playing():
-			print("not playing any audio")
+			# print("not playing any audio")
 			async with ctx.typing():
 				try:
-					print("finding video by keywords")
+					# print("finding video by keywords")
 					link = ytKeywordSearch(url)
 				except:
-					print('finding video by url')
+					# print('finding video by url')
 					link = url[0]
 				filename = await YTDLSource.from_url(link, loop=bot.loop)
 				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
@@ -115,10 +117,6 @@ async def play(ctx, *url):
 			await ctx.send("Already playing audio!")
 	except:
 		await ctx.send("The bot is not connected to a voice channel.")
-	# try:
-		
-	# except:
-	# 	await ctx.send("The bot is not connected to a voice channel.")
 
 @bot.command(name='join', help='Connect to voice chat the user is in')
 @commands.has_role('Big Pens')
@@ -151,6 +149,17 @@ async def stop(ctx):
 		await voice_client.disconnect()
 		await ctx.message.author.voice.channel.connect()
 
+@bot.command(name='volume', help=r"Change the volume to between 0% and 200%")
+async def volume(ctx, change):
+	voice_channel = ctx.message.guild.voice_client
+	voice_channel.source = discord.PCMVolumeTransformer(voice_channel.source)
+	# try:
+	# 	voice_channel.source.volume = change / 100
+	# except:
+	# 	await ctx.send("Volume change unsuccessful")
+	voice_channel.pause()
+	voice_channel.source.volume = int(change) / 100
+	voice_channel.resume()
 
 
 @bot.command(name='pause', help='Pause the current song')
