@@ -1,3 +1,5 @@
+# actiate venv: .\venv\Scripts\activate
+
 # TODO:
 	# commands to add:
 		# volume up
@@ -26,7 +28,7 @@ import asyncio
 
 import yt_dlp as youtube_dl
 
-from connection import DISCORD_TOKEN
+# from connection import DISCORD_TOKEN
 
 # custom tts
 from gtts import gTTS
@@ -40,7 +42,7 @@ from youtube_search import YoutubeSearch
 # not sure if I need this
 intents = discord.Intents.all()
 
-TOKEN = DISCORD_TOKEN
+TOKEN = os.getenv('DISCORD_TOKEN')
 
 client = discord.Client(intents = intents)
 bot = commands.Bot(command_prefix='!', intents=intents)
