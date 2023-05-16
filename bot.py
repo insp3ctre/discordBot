@@ -14,8 +14,7 @@
 				# song name, url, and who queued into database
 			# play command checks database for fiso song
 			# display queue on website (php?) like kevin bacon
-	# type in 1 channel, output in another
-	# delete all from "audio" folder on quit
+				# add option to add songs to queue from site
 
 	
 
