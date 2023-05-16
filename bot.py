@@ -1,25 +1,12 @@
 # actiate venv: .\venv\Scripts\activate
 
 # TODO:
-	# deleting after query doesn't work
-	# clearing table doesn't work on quit
-
 	# commands to add:
-		# stop (clear queue)
+		# queue (prints queue)
 		# pause (pause current audio) (add argument to play to check if pause is true)
 		# skip (skip current song and progress in queue)
-		# make play command play from database
-			# if song is currently paused, do nothing
-		# make queue command queue to database
-	# queue for songs
-		# connect to xampp
-			# command to add songs to queue
-				# filename and who queued into database
-			# play command checks database for fiso song
-			# display queue on website (php?) like kevin bacon
-				# add option to add songs to queue from site
-	# add global variable for queue length and current song ID
-		# have play query for where id = current song id + 1
+	# display queue on website (php?) like kevin bacon
+		# add option to add songs to queue from site
 
 	
 import os
@@ -49,9 +36,7 @@ bot_role = 'Big Pens'
 admin_role = 'Bot Dad'
 
 global queue_length
-global current_id
 queue_length = 0
-current_id = 0
 
 # sql stuff
 hostname = "127.0.0.1"
@@ -184,28 +169,6 @@ async def play(ctx):
 	except Exception as e:
 		print('no work', e)
 
-# @bot.command(name='goodplay', help='(old) Play a video via a url or keywords')
-# @commands.has_role(bot_role)
-# async def goodplay(ctx, *url):
-# 	voice_channel = ctx.message.guild.voice_client
-# 	try:
-# 		if not voice_channel.is_playing():
-# 			# print("not playing any audio")
-# 			async with ctx.typing():
-# 				try:
-# 					# print("finding video by keywords")
-# 					link = ytKeywordSearch(url)
-# 				except:
-# 					# print('finding video by url')
-# 					link = url[0]
-# 				filename = await YTDLSource.from_url(link, loop=bot.loop)
-# 				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=filename))
-# 				await ctx.send('**Now playing:** {}'.format(filename))
-# 		else:
-# 			await ctx.send("Already playing audio!")
-# 	except:
-# 		await ctx.send("The bot is not connected to a voice channel.")
-
 @bot.command(name='join', help='Connect to voice chat the user is in')
 @commands.has_role(bot_role)
 async def join(ctx):
@@ -225,6 +188,15 @@ async def leave(ctx):
     else:
         await ctx.send("The bot is not connected to a voice channel.")
 
+@bot.command(name='clear', help='Clear the queue')
+@commands.has_role(admin_role)
+async def clear(ctx):
+	cursor = con.cursor()
+	query = "truncate queue"
+	cursor.execute(query)
+	con.commit()
+	cursor.close()
+	await ctx.send("Queue cleared.")
 
 @bot.command(name='stop', help='Reset the bot in a call')
 @commands.has_role(bot_role)
@@ -350,17 +322,8 @@ async def quit(ctx):
 
 		# clear database
 		cursor = con.cursor()
-		query = '''DROP DATABASE IF EXiSTS harley;
-				CREATE DATABASE harley;
-				USE harley;
-
-				CREATE TABLE queue (
-					ID INT UNSIGNED NOT NULL AUTO_INCREMENT,
-					filename VARCHAR(300) NOT NULL,
-					author VARCHAR(300) NOT NULL,
-					PRIMARY KEY (ID)
-				);'''
-		cursor.execute(query, multi=True)
+		query = "truncate queue"
+		cursor.execute(query)
 		con.commit()
 		cursor.close()
 		con.close()
