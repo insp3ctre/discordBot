@@ -1,13 +1,18 @@
 # actiate venv: .\venv\Scripts\activate
+# START DATABASE FIRST
 
 # TODO:
 	# commands to add:
 		# queue (prints queue)
-		# pause (pause current audio) (add argument to play to check if pause is true)
+		# pause (pause current audio) (add argument to play to check if pause is true, otherwise it might skip the song)
 		# skip (skip current song and progress in queue)
 	# display queue on website (php?) like kevin bacon
 		# add option to add songs to queue from site
-
+	# idea to try
+		# have queue check queue length (global variable) and run play for that many times?
+			# add will add to queue length variable
+			# hmm don't think this works
+		# make queue class?
 	
 import os
 import cv2
@@ -134,6 +139,8 @@ async def add(ctx, *url):
 async def play(ctx):
 	voice_channel = ctx.message.guild.voice_client
 	try:
+		while voice_channel.is_playing():
+			time.sleep(10)
 		cursor = con.cursor()
 		query = ("SELECT * FROM queue "
 	    		"ORDER BY id ASC")
@@ -162,9 +169,9 @@ async def play(ctx):
 		cursor.close()
 		print(4)
 		if queue_length > 1:
-			length = webm_length(filename) * 10
-			print(length)
-			time.sleep(length)
+			# length = webm_length(filename) * 10
+			# print(length)
+			# time.sleep(length)
 			next = await play(ctx)
 	except Exception as e:
 		print('no work', e)
