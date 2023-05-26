@@ -165,3 +165,5 @@ ffmpeg.exe
 
 audio/
 connection.py
+scrape.py
+testBot.py
