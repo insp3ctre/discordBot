@@ -26,6 +26,7 @@ import yt_dlp as youtube_dl
 from gtts import gTTS
 from elevenlabs import *
 from mutagen.mp3 import MP3
+from decouple import config
 from discord.ext import commands
 from youtube_search import YoutubeSearch
 from mysql.connector import errorcode
@@ -36,7 +37,7 @@ intents = discord.Intents.all()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 # eleven labs
-set_api_key(os.getenv('ELEVEN_LABS_TOKEN'))
+set_api_key(config('ELEVEN_LABS_TOKEN'))
 
 client = discord.Client(intents = intents)
 bot = commands.Bot(command_prefix='!', intents=intents)
