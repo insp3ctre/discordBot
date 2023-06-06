@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 
 import youtube_dl
 
-from scrape import meal
+from testing.scrape import meal
 from twilio.rest import Client
 from connection import DISCORD_TOKEN, account_sid, auth_token, from_number, to_number
 

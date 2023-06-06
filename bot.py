@@ -24,6 +24,7 @@ import mysql.connector
 import random as rand
 import yt_dlp as youtube_dl
 from gtts import gTTS
+from elevenlabs import *
 from mutagen.mp3 import MP3
 from discord.ext import commands
 from youtube_search import YoutubeSearch
@@ -33,6 +34,9 @@ from mysql.connector import errorcode
 intents = discord.Intents.all()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
+
+# eleven labs
+set_api_key(os.getenv('ELEVEN_LABS_TOKEN'))
 
 client = discord.Client(intents = intents)
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -282,18 +286,29 @@ def webm_length(filename):
 # custom tts
 @bot.command(name='vtts', help='Uses text to speech in a voice channel')
 @commands.has_role(admin_role)
-async def vtts(ctx, *tss):
+async def vtts(ctx, speech, *tss):
+	valid_voices = {
+		"mj": "cloned/MJ"
+	}
 	server = ctx.message.guild
 	voice_channel = server.voice_client
 	if tss is not None:
-		tss = convertTuple(tss)
-		audio = gTTS(text=tss, lang='en')
-		file = f'{rand.randint(1, 70)}.mp3'
-		audio.save(file)
-		voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=file))
-		length = mutagen_length(file)
-		time.sleep(length)
-		os.remove(file)
+		if speech in valid_voices.keys():
+				
+			tss = convertTuple(tss)
+			audio = generate(
+				text = tss,
+				# voice = valid_voices[speech],
+				voice = 'MJ',
+				model = "eleven_monolingual_v1"
+			)
+			print("generated audio")
+			save(audio, 'output.mp3')
+			print("saved audio")
+			voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source='output.mp3'))
+			print("playing audio")
+			length = mutagen_length('output.mp3')
+			time.sleep(length)
 	else:
 		await ctx.send('You did not include a message')
 
