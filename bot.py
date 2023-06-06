@@ -295,12 +295,12 @@ async def vtts(ctx, speech, *tss):
 	voice_channel = server.voice_client
 	if tss is not None:
 		if speech in valid_voices.keys():
-				
+			print(voices())	
 			tss = convertTuple(tss)
 			audio = generate(
 				text = tss,
 				# voice = valid_voices[speech],
-				voice = 'MJ',
+				voice = "MJ",
 				model = "eleven_monolingual_v1"
 			)
 			print("generated audio")
