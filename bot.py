@@ -289,7 +289,9 @@ def webm_length(filename):
 @commands.has_role(admin_role)
 async def vtts(ctx, speech, *tss):
 	valid_voices = {
-		"mj": "cloned/MJ"
+		"mj": "MJ",
+		"chug": "Fortnite Kid",
+		"goof": "Goofy"
 	}
 	server = ctx.message.guild
 	voice_channel = server.voice_client
@@ -300,7 +302,7 @@ async def vtts(ctx, speech, *tss):
 			audio = generate(
 				text = tss,
 				# voice = valid_voices[speech],
-				voice = "MJ",
+				voice = valid_voices[speech],
 				model = "eleven_monolingual_v1"
 			)
 			print("generated audio")
