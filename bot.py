@@ -13,6 +13,9 @@
 			# add will add to queue length variable
 			# hmm don't think this works
 		# make queue class?
+	# add chatgpt
+		# seperate from !vtts
+		# with different voices (e.g. !ai [voice] [text])
 	
 import os
 import cv2
