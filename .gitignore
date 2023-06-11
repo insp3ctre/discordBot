@@ -166,3 +166,4 @@ ffmpeg.exe
 audio/
 connection.py
 testing/
+output.mp3
