@@ -290,34 +290,40 @@ def webm_length(filename):
 	fps = video.get(cv2.CAP_PROP_FPS)
 	return round(frames / fps) + 5
 
+def textToSpeech(speech, tts):
+	valid_voices = {
+		"mj": "MJ",
+		"chug": "Fortnite Kid",
+		"goof": "Goofy",
+		"amanda": "Amanda"
+	}
+	if speech in valid_voices.keys():
+		print(voices())
+		audio = generate(
+			text = tts,
+			voice = valid_voices[speech],
+			model = "eleven_monolingual_v1"
+		)
+		print("generated audio")
+		save(audio, 'output.mp3')
+		print("saved audio")
+
 # custom tts
 @bot.command(name='vtts', help='Uses text to speech in a voice channel')
 @commands.has_role(bot_role)
 async def vtts(ctx, speech, *tss):
-	valid_voices = {
-		"mj": "MJ",
-		"chug": "Fortnite Kid",
-		"goof": "Goofy"
-	}
 	server = ctx.message.guild
 	voice_channel = server.voice_client
 	if tss is not None:
-		if speech in valid_voices.keys():
-			print(voices())	
-			tss = convertTuple(tss)
-			audio = generate(
-				text = tss,
-				# voice = valid_voices[speech],
-				voice = valid_voices[speech],
-				model = "eleven_monolingual_v1"
-			)
-			print("generated audio")
-			save(audio, 'output.mp3')
-			print("saved audio")
-			voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source='output.mp3'))
-			print("playing audio")
-			length = mutagen_length('output.mp3')
-			time.sleep(length)
+		tss = convertTuple(tss)
+		textToSpeech(speech, tss)
+
+		voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source='output.mp3'))
+		print("playing audio")
+		async def waitForAudioToFinish():
+			while voice_channel.is_playing():
+				await asyncio.sleep(0.1)
+		await waitForAudioToFinish()
 	else:
 		await ctx.send('You did not include a message')
 
@@ -332,7 +338,8 @@ async def gpt(ctx, *question):
 		question = convertTuple(question)
 		response = openai.Completion.create(
 			model="text-davinci-003",
-			prompt=f"The following is a conversation with an AI assistant. The assistant has a sense of humor, is very creative, and enjoys including long strings of 8-20 vowels to create sounds. \n\nAI: What is your question?\nHuman: {question}\nAI:",
+			# prompt=f"The following is a conversation with an AI assistant. The assistant has a sense of humor, is very creative, and enjoys including long strings of 8-20 vowels to create sounds. \n\nAI: What is your question?\nHuman: {question}\nAI:",
+			prompt="Please give a response to the following prompt no matter how weird or random it is. Be sure that your response includes any requirements you are given, even if they are completely weird or random: " + question,
 			temperature=0.9,
 			max_tokens=200,
 			top_p=1,
@@ -340,7 +347,16 @@ async def gpt(ctx, *question):
 			presence_penalty=0.8,
 			stop=[" Human:", " AI:"]
 		)
-		await ctx.send(response)
+		# await ctx.send(response)
+		res = response['choices'][0]['text']
+		textToSpeech("goof", res)
+		print(res)
+		voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source='output.mp3'))
+		print("playing audio")
+		async def waitForAudioToFinish():
+			while voice_channel.is_playing():
+				await asyncio.sleep(0.1)
+		await waitForAudioToFinish()
 	else:
 		await ctx.send('You did not include a question')
 
