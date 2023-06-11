@@ -51,8 +51,15 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 bot_role = 'Big Pens'
 admin_role = 'Bot Dad'
 
-global queue_length
+global queue_length, valid_voices
 queue_length = 0
+valid_voices = {
+		"mj": "MJ",
+		"chug": "Fortnite Kid",
+		"goof": "Goofy",
+		"amanda": "Amanda",
+		"adam": "Me"
+	}
 
 # sql stuff
 hostname = "127.0.0.1"
@@ -69,7 +76,7 @@ except mysql.connector.Error as err:
   elif err.errno == errorcode.ER_BAD_DB_ERROR:
     print("Database does not exist")
   else:
-    print(err)
+    print("Could not connect to database")
 
 
 ########### youtube stuff ####
@@ -291,12 +298,6 @@ def webm_length(filename):
 	return round(frames / fps) + 5
 
 def textToSpeech(speech, tts):
-	valid_voices = {
-		"mj": "MJ",
-		"chug": "Fortnite Kid",
-		"goof": "Goofy",
-		"amanda": "Amanda"
-	}
 	if speech in valid_voices.keys():
 		print(voices())
 		audio = generate(
@@ -331,34 +332,50 @@ async def vtts(ctx, speech, *tss):
 # chatgpt responses
 @bot.command(name='gpt', help='Ask chatgpt a question!')
 @commands.check(lambda ctx: ctx.author.name == "insp3ctre")
-async def gpt(ctx, *question):
+async def gpt(ctx, speech, *question):
 	server = ctx.message.guild
-	voice_channel = server.voice_client
-	if question is not None:
-		question = convertTuple(question)
-		response = openai.Completion.create(
-			model="text-davinci-003",
-			# prompt=f"The following is a conversation with an AI assistant. The assistant has a sense of humor, is very creative, and enjoys including long strings of 8-20 vowels to create sounds. \n\nAI: What is your question?\nHuman: {question}\nAI:",
-			prompt="Please give a response to the following prompt no matter how weird or random it is. Be sure that your response includes any requirements you are given, even if they are completely weird or random: " + question,
-			temperature=0.9,
-			max_tokens=200,
-			top_p=1,
-			frequency_penalty=0.0,
-			presence_penalty=0.8,
-			stop=[" Human:", " AI:"]
-		)
-		# await ctx.send(response)
-		res = response['choices'][0]['text']
-		textToSpeech("goof", res)
-		print(res)
-		voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source='output.mp3'))
-		print("playing audio")
-		async def waitForAudioToFinish():
-			while voice_channel.is_playing():
-				await asyncio.sleep(0.1)
-		await waitForAudioToFinish()
+	voice_channel = server.voice_client	
+	if voice_channel is None:
+		await ctx.send("The bot is not connected to a voice channel.")
 	else:
-		await ctx.send('You did not include a question')
+		if question is not None:
+			if speech in valid_voices.keys():
+				question = convertTuple(question)
+				match speech:
+					case "amanda":
+						starter = "You are a loveable girl in her mid twenties named Amanda. You have a pet bunny named Lucy, and you are very kind, smart, and a fun person to be around."
+					case "goof":
+						starter = "You are the loveable cartoon character Goofy. You are a tall, anthropomorphic dog who loves to say the word 'hyuck'. You are good friends with Mickey Mouse and Donald Duck."
+					case "mj":
+						starter = "You are 80s pop artist Michael Jackson. You make the greatest songs in the world, and you love to use the phrase 'hee hee'. You have no controversies about you."
+					case "chug":
+						starter = "You are a pro Fortnite gamer. You spend all your time getting victory royales, and you LOVE to drink Chug Jugs. You are a little kid you plays a lot of video games."
+					case "adam":
+						starter = "You are a boy in his mid twenties named Adam. You love to play video games, and you are a master at coding. You are usually sniffly, so it's okay to 'sniffle' every once in a while."
+
+				response = openai.Completion.create(
+					model="text-davinci-003",
+					# prompt=f"The following is a conversation with an AI assistant. The assistant has a sense of humor, is very creative, and enjoys including long strings of 8-20 vowels to create sounds. \n\nAI: What is your question?\nHuman: {question}\nAI:",
+					prompt="Please give a response to the following prompt no matter how weird or random it is. Be sure that your response includes any requirements you are given, even if they are completely weird or random. Also make sure to give a response pretending that you have the following qualities: " + starter + "Now, here is your prompt: " + question,
+					temperature=0.9,
+					max_tokens=200,
+					top_p=1,
+					frequency_penalty=0.0,
+					presence_penalty=0.8,
+					stop=[" Human:", " AI:"]
+				)
+				# await ctx.send(response)
+				res = response['choices'][0]['text']
+				textToSpeech(speech, res)
+				print(res)
+				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source='output.mp3'))
+				print("playing audio")
+				async def waitForAudioToFinish():
+					while voice_channel.is_playing():
+						await asyncio.sleep(0.1)
+				await waitForAudioToFinish()
+		else:
+			await ctx.send('You did not include a question')
 
 ######
 # test
@@ -386,20 +403,22 @@ async def quit(ctx):
 	except:
 		await ctx.send('Goodnight, Sweet Prince')
 	finally:
-		# clear audio file
-		files = glob.glob('audio/*')
-		for f in files:
-			os.remove(f)
+		try:
+			# clear audio file
+			files = glob.glob('audio/*')
+			for f in files:
+				os.remove(f)
 
-		# clear database
-		cursor = con.cursor()
-		query = "truncate queue"
-		cursor.execute(query)
-		con.commit()
-		cursor.close()
-		con.close()
-		print("database cleared")
-
+			# clear database
+			cursor = con.cursor()
+			query = "truncate queue"
+			cursor.execute(query)
+			con.commit()
+			cursor.close()
+			con.close()
+			print("database cleared")
+		except:
+			print("wasn't connected to database")
 		exit()
 		
 	
