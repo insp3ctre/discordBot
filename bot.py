@@ -21,6 +21,7 @@ import os
 import cv2
 import glob
 import time
+import openai
 import discord
 import asyncio
 import mysql.connector
@@ -41,6 +42,8 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 
 # eleven labs
 set_api_key(config('ELEVEN_LABS_TOKEN'))
+
+openai.api_key = config('OPENAI_API_KEY')
 
 client = discord.Client(intents = intents)
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -289,7 +292,7 @@ def webm_length(filename):
 
 # custom tts
 @bot.command(name='vtts', help='Uses text to speech in a voice channel')
-@commands.has_role(admin_role)
+@commands.has_role(bot_role)
 async def vtts(ctx, speech, *tss):
 	valid_voices = {
 		"mj": "MJ",
@@ -318,6 +321,28 @@ async def vtts(ctx, speech, *tss):
 	else:
 		await ctx.send('You did not include a message')
 
+
+# chatgpt responses
+@bot.command(name='gpt', help='Ask chatgpt a question!')
+@commands.check(lambda ctx: ctx.author.name == "insp3ctre")
+async def gpt(ctx, *question):
+	server = ctx.message.guild
+	voice_channel = server.voice_client
+	if question is not None:
+		question = convertTuple(question)
+		response = openai.Completion.create(
+			model="text-davinci-003",
+			prompt=f"The following is a conversation with an AI assistant. The assistant has a sense of humor, is very creative, and enjoys including long strings of 8-20 vowels to create sounds. \n\nAI: What is your question?\nHuman: {question}\nAI:",
+			temperature=0.9,
+			max_tokens=200,
+			top_p=1,
+			frequency_penalty=0.0,
+			presence_penalty=0.8,
+			stop=[" Human:", " AI:"]
+		)
+		await ctx.send(response)
+	else:
+		await ctx.send('You did not include a question')
 
 ######
 # test
@@ -367,47 +392,6 @@ async def quit(ctx):
 @bot.event
 async def on_ready():
 	print('Harley is ready!')		
-
-##### testing
-# @bot.command(name='play2', help='Play a video via a url or "keywords"')
-# @commands.has_role(bot_role)
-# async def play2(ctx, *url):
-# 	voice_client = ctx.message.guild.voice_client
-# 	if not voice_client.is_playing():
-# 		try :
-# 			server = ctx.message.guild
-# 			voice_channel = server.voice_client
-# 			async with ctx.typing():
-# 				yt = YouTube(url)
-# 				video = yt.streams.filter(only_audio=True).first()
-# 				destination = 'audio/'
-# 				out_file = video.download(output_path=destination)
-# 				base, ext = os.path.splitext(out_file)
-# 				new_file = base + '.mp3'
-# 				os.rename(out_file, new_file)
-# 				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=new_file))
-# 				await ctx.send('**Now playing:** {}'.format(yt.title))
-# 		except:
-# 			await ctx.send("The bot is not connected to a voice channel.")
-# 	else:
-# 		await voice_client.disconnect()
-# 		await ctx.message.author.voice.channel.connect()
-# 		try :
-# 			server = ctx.message.guild
-# 			voice_channel = server.voice_client
-# 			async with ctx.typing():
-# 				yt = YouTube(url)
-# 				video = yt.streams.filter(only_audio=True).first()
-# 				destination = '.'
-# 				out_file = video.download(output_path=destination)
-# 				base, ext = os.path.splitext(out_file)
-# 				new_file = base + '.mp3'
-# 				os.rename(out_file, new_file)
-# 				voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=new_file))
-# 				await ctx.send('**Now playing:** {}'.format(new_file))
-# 		except:
-# 			await ctx.send("The bot is not connected to a voice channel.")
-#################
 
 
 if __name__ == "__main__" :
